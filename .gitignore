@@ -1,3 +1,6 @@
+# Ignore folder VSCode settings
+.vscode/
+
 # Prerequisites
 *.d
 

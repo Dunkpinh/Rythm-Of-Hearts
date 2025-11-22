@@ -1,6 +1,9 @@
 # Ignore folder VSCode settings
 .vscode/
 
+# Ignore bat
+init.bat
+
 # Prerequisites
 *.d
 

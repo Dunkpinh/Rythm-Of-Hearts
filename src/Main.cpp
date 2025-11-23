@@ -14,7 +14,7 @@ class game{
         int waktu;
         int jumlahKartu = 3;
 
-    void delayPrint(const string& text, int delayMs = 100) {
+    void delayPrint(const string& text, int delayMs = 100) { // print dengan delay
         for(char c : text) {
             cout << c;
             this_thread::sleep_for(chrono::milliseconds(delayMs));
@@ -23,11 +23,11 @@ class game{
     }
 
     public:
-        game(int nyawa, int waktu){
+        game(int nyawa, int waktu){ // konstruktor
             this->nyawa = nyawa;
             this->waktu = waktu;
         }
-        void ubahJumlahKartu(){
+        void ubahJumlahKartu(){ 
             jumlahKartu = 4;
         }
         void randomCard(){
@@ -35,13 +35,13 @@ class game{
             string setKartu = "";
             SetConsoleOutputCP(CP_UTF8);
             for (size_t i = 0; i < jumlahKartu; i++){
-                int idxKartu = rand() % 4 + 1;
+                int idxKartu = rand() % 4 + 1; // angka random 1-4
                 string kartu;
                 switch(idxKartu){
-                    case 1: kartu   = u8"\u2665"; break; // ♥
-                    case 2: kartu   = u8"\u2660"; break; // ♠
-                    case 3: kartu    = u8"\u2663"; break; // ♣
-                    case 4: kartu  = u8"\u2666"; break; // ♦
+                    case 1: kartu = u8"\u2665"; break; // ♥
+                    case 2: kartu = u8"\u2660"; break; // ♠
+                    case 3: kartu = u8"\u2663"; break; // ♣
+                    case 4: kartu = u8"\u2666"; break; // ♦
                 }
                 setKartu += kartu;
             }
@@ -55,7 +55,4 @@ int main(int argc, char const *argv[])
 {
     game rythmOfHearts = game(3, 20);
     rythmOfHearts.randomCard();
-     cout << "\u2665";
-      cout << "\u2665";
-       cout << "\u2665";
 }

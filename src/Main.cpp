@@ -23,6 +23,7 @@ string spade = u8"\u2660";
 string heart = u8"\u2665";
 string club = u8"\u2663";
 string diamond = u8"\u2666";
+
 // Method global
 void delayPrintEndl(const string& text, int delayMs = 100) { // print dengan delay
         for (size_t i = 0; i < text.size(); i++) {
@@ -104,21 +105,24 @@ void printVector(vector<Record>& data){
     int size = 3;
     if(data.size() < 3) size = data.size();
 
-    for (size_t i = 0; i < size; i++)
-    {
-        cout << data[i].nickname << endl;
-        cout << data[i].skor << endl;
-        cout << data[i].tanggal << endl << endl;
+    for (size_t i = 0; i < size; i++){
+        delayPrint("#" + to_string(i+1), 75);
+        delayPrint(data[i].nickname, 25); cout << endl;
+        delayPrint(to_string(data[i].skor) , 25); cout << endl;
+        delayPrint(data[i].tanggal, 25); cout << endl << endl;
+        tunggu(500);
     }
 }
 
 void readRecords(vector<Record>& records){
         fstream file("src/dataRecords.txt");
+        if (!file.is_open()) {
+            cerr << "File tidak bisa dibuka!" << endl;
+            return;
+        }
         Record r;
         string skorStr;
-        while (getline(file, r.nickname) &&
-            getline(file, skorStr) &&
-            getline(file, r.tanggal)) {
+        while (getline(file, r.nickname) && getline(file, skorStr) && getline(file, r.tanggal)) {
             r.skor = stoi(skorStr);   
             records.push_back(r);
         }
@@ -127,11 +131,10 @@ void readRecords(vector<Record>& records){
 
 void writeRecords(const Record& records) {
     fstream file("src/dataRecords.txt", ios::app); 
-    if (!file) {
+    if (!file.is_open()) {
         cerr << "File tidak bisa dibuka!" << endl;
         return;
     }
-
     file << records.nickname << endl << records.skor << endl << records.tanggal << endl << endl;
 }
 
@@ -158,6 +161,9 @@ class Game{
         }
         int getSkor(){
             return skor;
+        }
+        void setNyawa(int nyawa = 3){
+            this->nyawa = nyawa;
         }
         void statusFaseHati(string& text){
             int beruntun = 0;
@@ -214,7 +220,7 @@ class Game{
                 delayPrint(setKartu, 100);
                 cout << endl;
                 return;
-            }  
+            } 
             setKartu = tempSetKartu;
             delayPrint(setKartu, 100);
             cout << endl;
@@ -248,7 +254,9 @@ class Game{
                 nyawa--;
                 hit = false;
             }
-            statusFaseHati(input);
+            if(hit){
+                statusFaseHati(input);
+            }
             return hit;
         }
         void setInput(char inSpade, char inHeart, char inClub, char inDiamond){
@@ -305,36 +313,40 @@ class Menu{
             delayPrint("(3) Record", 25);
             cout << endl;
             tunggu(250);
-            delayPrint("(4) Setting", 25);
+            delayPrint("(4) Pengaturan", 25);
             cout << endl;
             tunggu(250);
             delayPrint("(5) Exit", 25);
             cout << endl;
             tunggu(250);
             delayPrint("Pilih: ", 15);
+            cout << endl;
             char c;
             c = _getch();
             switch(c){
-                case '1':tampilkanPeraturan(); break;
+                case '1':layarBersih(); tampilkanPeraturan(); break;
                 case '2':layarBersih(); newGame(); break;
                 case '3':layarBersih(); tampilkanRecord(); break;
-                case '4': break;
+                case '4':layarBersih(); pengaturan(); break;
                 case '5':cout << endl; delayPrint("Terimakasih sudah bermain :) ", 25); break;
+                default: delayPrint("Masukkan input dengan benar!", 15); c = _getch(); layarBersih(); 
             }
-            while(c != '4'){
+            while(c != '5'){
                 cout << "(1) Peraturan" << endl;
                 cout << "(2) New game" << endl;
                 cout << "(3) Record" << endl;
-                cout << "(4) Setting" << endl;
+                cout << "(4) Pengaturan" << endl;
                 cout << "(5) Exit" << endl;
                 delayPrint("Pilih: ", 15);
+                cout << endl;
                 c = _getch();
                 switch(c){
                     case '1':tampilkanPeraturan(); break;
                     case '2':layarBersih(); newGame(); break;
                     case '3':layarBersih(); tampilkanRecord(); break;
-                    case '4':; break;
+                    case '4':layarBersih(); pengaturan(); break;
                     case '5':cout << endl; delayPrint("Terimakasih sudah bermain :) ", 25); break;
+                    default: delayPrint("Masukkan input dengan benar!", 15); c = _getch(); layarBersih(); 
                 }
             }
             
@@ -394,10 +406,11 @@ class Menu{
             cout << "Tekan tombol apa saja untuk keluar";
             c = _getch();
             layarBersih();
+            rythmOfHearts.setNyawa();
         }
+        
         void tampilkanPeraturan(){
             char c;
-            layarBersih();
             delayPrint("(1) Aturan Dasar", 25);
             cout << endl;
             tunggu();
@@ -442,14 +455,21 @@ class Menu{
             delayPrint("    Akan muncul beberapa karakter secara random di layar", 25);
             c = _getch();
             cout << endl;
-            delayPrint("    " + spade + " " + heart + " " + club + " " + diamond, 25);
+            delayPrint("    " + spade + " " + heart + " " + club + " " + diamond);
+            c = _getch();
+            cout << endl;
+            delayPrint("    Empat karakter diwakilkan oleh: ", 25);
+            c = _getch();
+            cout << endl;
+            string teksPenjelasan = "";
+            teksPenjelasan += rythmOfHearts.getInSpade();
+            teksPenjelasan += "(" + spade + "), " + rythmOfHearts.getInHeart() + "(" + heart + "), " + rythmOfHearts.getInClub() + "(" + club + "), " + rythmOfHearts.getInDiamond() + "(" + diamond + ")";
+            delayPrint("    " + teksPenjelasan);
+            tunggu(100);
+            delayPrint("    (Dapat dirubah di Pengaturan)", 25);
             c = _getch();
             cout << endl;
             delayPrint("    Pemain harus menginput karakter yang muncul dengan benar dalam rentang waktu", 25);
-            c = _getch();
-            cout << endl;
-            std::string teksPenjelasan = "Empat karakter diwakilkan oleh: " + std::string(1, rythmOfHearts.getInSpade()) + "(" + spade + "), " + std::string(1, rythmOfHearts.getInHeart()) + "(" + heart + "), " + std::string(1, rythmOfHearts.getInClub()) + "(" + club + "), " + std::string(1, rythmOfHearts.getInDiamond()) + "(" + diamond + ")";
-            delayPrint("    " + teksPenjelasan, 25);
             c = _getch();
             cout << endl;
             delayPrint("    Misal", 25);
@@ -474,25 +494,83 @@ class Menu{
                 cout << endl;
             }while(!hit);
             delayPrint("    Nice!", 25); 
+            c = _getch();
             cout << endl;
             delayPrint("    Namun perlu diperhatikan, pemain harus memasukkan dalam rentang waktu", 25);
-            cout << endl;
             c = _getch();
+            cout << endl;
             delayPrint("    Maka pastikan jangan sampai lewat waktunya ya!", 25);
-            cout << endl;
             c = _getch();
+            cout << endl;
             delayPrint("    Setiap kali berhasil pemain akan mendapatkan 5 poin, namun jika gagal mengurangi 1 nyawa", 25);
-            cout << endl;
             c = _getch();
+            cout << endl;
             delayPrint("    Pemain akan memiliki 3 nyawa", 25);
-            cout << endl;
             c = _getch();
+            cout << endl;
             delayPrint("    Tugas pemain adalah mendapatkan poin sebanyak-banyaknya", 25);
-            cout << endl;
             c = _getch();
+            cout << endl;
             delayPrint("    Good luck!", 25);
-            cout << endl;
             c = _getch();
+            cout << endl << endl;
+            cout << "Tekan tombol apa saja untuk keluar";
+            c = _getch();
+        }
+        void pengaturan(){
+            delayPrint("Input saat ini: ", 15);
+            tunggu(500);
+            cout << endl;
+            string teksInput = "";
+            teksInput += spade + ": " + rythmOfHearts.getInSpade() + "   " + heart + ": " + rythmOfHearts.getInHeart() + "   " + club + ": " + rythmOfHearts.getInClub() + "   " + diamond + ": " + rythmOfHearts.getInDiamond();
+            delayPrint(teksInput, 15);
+            tunggu(750);
+            cout << endl << endl;
+            delayPrint("Ingin mengubah input? (Y/N)", 15);
+            char c;
+            char inSpade, inHeart, inClub, inDiamond;
+            c = _getch();
+            cout << endl;
+            switch (c){
+                case 'y':   cout << endl; delayPrint("Masukkan input untuk Spade: ", 15); inSpade = _getch(); cout << inSpade;
+                
+                            do{
+                                cout << endl; 
+                                delayPrint("Masukkan input untuk Heart: ", 15); inHeart = _getch(); cout << inHeart;
+                                if(inHeart == inSpade) {cout << endl; delayPrint("Masukkan input yang berbeda! ", 15);}
+                            }while(inHeart == inSpade);
+
+                            do{
+                                cout << endl; 
+                                delayPrint("Masukkan input untuk Club: ", 15); inClub = _getch(); cout << inClub;
+                                if(inClub == inSpade || inClub == inHeart) {cout << endl; delayPrint("Masukkan input yang berbeda! ", 15);}
+                            }while(inClub == inSpade || inClub == inHeart);
+                            
+                            do{
+                                cout << endl; 
+                                delayPrint("Masukkan input untuk Diamond: ", 15); inDiamond = _getch(); cout << inDiamond;
+                                if(inDiamond == inSpade || inDiamond == inHeart || inDiamond == inClub) {cout << endl; delayPrint("Masukkan input yang berbeda! ", 15);}
+                            }while(inDiamond == inSpade || inDiamond == inHeart || inDiamond == inClub);
+
+                            cout << endl;
+                            tunggu(500);
+                            layarBersih();
+                            teksInput = "";
+                            teksInput += spade + ": " + inSpade + "   " + heart + ": " + inHeart + "   " + club + ": " + inClub + "   " + diamond + ": " + inDiamond;
+                            delayPrint(teksInput, 15);
+                            tunggu(500);
+                            cout << endl << endl; delayPrint("Yakin ingin menyimpan? (Y/N)", 15);
+                            c = _getch();
+                            switch (c){
+                                case 'y':rythmOfHearts.setInput(inSpade, inHeart, inClub, inDiamond); cout << endl << endl; delayPrint("Pengaturan input berhasil tersimpan!", 15); break;
+                                case 'n':break;
+                            }
+                case 'n':break;
+            }
+            cout << endl << endl;
+            cout << "Tekan tombol apa saja untuk keluar";
+            c = _getch();
+            layarBersih();
         }
 
 };
@@ -504,3 +582,4 @@ int main(int argc, char const *argv[])
     SetConsoleOutputCP(CP_UTF8);
     Menu tampilanAwal;
 }
+  

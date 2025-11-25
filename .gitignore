@@ -1,6 +1,9 @@
 # Ignore folder VSCode settings
 .vscode/
 
+# Text Documents
+*.txt
+
 # Ignore bat
 *.bat
 

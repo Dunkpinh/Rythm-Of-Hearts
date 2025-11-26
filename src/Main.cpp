@@ -154,8 +154,14 @@ class Game{
         int highestCombo = 0;
         int comboSpade = 0; // Counter untuk spade beruntun
         int totalCardsSpawned = 0; // Counter total kartu yang sudah spawn
-        bool faseHati = false;
+        bool faseHeart = false;
+        bool faseHeartPernahTerbuka = false;
         int hitHeart = 0;
+        int missHeart = 0;
+
+        bool faseSpadeHeart = false;
+        int hitSpade = 0;
+        int spadeHeartRoundsRemaining = 0;
         
         // Atribut untuk fase Diamond Kill
         bool faseDiamondKill = false;
@@ -180,8 +186,7 @@ class Game{
         Game(int life, int score){ 
             this->life = life;
             this->score = score;
-            // Set trigger point acak untuk diamond kill (60-80 kartu)
-            this->diamondKillTriggerPoint = 60 + rand() % 21;
+            this->diamondKillTriggerPoint = 45;
         }
         
         int getLife(){ 
@@ -203,12 +208,15 @@ class Game{
             this->highestCombo = 0;
             this->comboSpade = 0;
             this->totalCardsSpawned = 0;
-            this->faseHati = false;
+            this->faseHeart = false;
             this->baseNumberOfCards = 3;
             this->faseDiamondKill = false;
             this->diamondKillRoundsRemaining = 0;
             this->killedLane = -1;
-            this->diamondKillTriggerPoint = 60 + rand() % 21;
+            this->diamondKillTriggerPoint = 45;
+            this->hitHeart = 0;
+            this->hitSpade = 0;
+            this->spadeHeartRoundsRemaining = 0;
         }
         
         void setInput(char inputKeySpade, char inputKeyHeart, char inputKeyClub, char inputKeyDiamond){
@@ -229,28 +237,32 @@ class Game{
 
         void drawHeader(){ 
             clearScreen();
-            cout << "life: " << life << " | score: " << score << " | Combo: " << combo;
-            if (faseDiamondKill) {
-                cout << " | >>> DIAMOND KILL AKTIF! <<<";
-            } else if (faseHati) {
-                cout << " | FASE HATI AKTIF!";
-            } else {
-                cout << " | Spade Combo: " << comboSpade << "/3 | Cards: " << totalCardsSpawned;
-            }
+            cout << "life: " << life << " | score: " << score << " | Combo: " << combo; cout << " | Cards: " << totalCardsSpawned;
+            // if (faseDiamondKill) {
+            //     cout << " | >>> DIAMOND KILL AKTIF! <<<";
+            // } else if (faseHeart) {
+            //     cout << " | FASE HATI AKTIF!";
+            // } else {
+            //     cout << " | Spade Combo: " << comboSpade << "/3 | Cards: " << totalCardsSpawned;
+            // }
             cout << endl;
             cout << "=========================================" << endl;
             
             // Tampilkan info killed lane jika ada
             if (killedLane >= 0 && diamondKillRoundsRemaining > 0) {
+                moveCursor(0, 45);
                 cout << "PERHATIAN: ";
                 switch(killedLane) {
                     case 0: cout << spade << " SPADE"; break;
                     case 1: cout << heart << " HEART"; break;
                     case 2: cout << club << " CLUB"; break;
                 }
-                cout << " TERBUNUH! Tekan [" << inputKeyDiamond << "] untuk kartu ini!" << endl;
-                cout << "Rounds tersisa: " << diamondKillRoundsRemaining << endl;
-                cout << "=========================================" << endl;
+                moveCursor(0, 45);
+                cout << " TERBUNUH! Tekan [" << inputKeyDiamond << "] untuk kartu ini!";
+                moveCursor(1, 45);
+                cout << "Rounds tersisa: " << diamondKillRoundsRemaining;
+                moveCursor(2, 45);
+                cout << "=========================================";
             }
         }
         
@@ -264,14 +276,20 @@ class Game{
         }
 
         bool randomCard(){
+            string feedback = "";
+            int feedbackFrame = 0;
+
             // Cek apakah Diamond Kill harus diaktifkan
-            if (totalCardsSpawned >= diamondKillTriggerPoint && !faseDiamondKill && diamondKillRoundsRemaining == 0) {
+            int r = rand() % 5;
+            if (totalCardsSpawned >= diamondKillTriggerPoint && totalCardsSpawned <= 100 && !faseDiamondKill && diamondKillRoundsRemaining == 0 && r == 0) {
                 faseDiamondKill = true;
                 diamondKillRoundsRemaining = 5;
                 
                 // Pilih lane secara acak untuk dibunuh (exclude diamond)
                 // Lane 0=spade, 1=heart, 2=club
-                killedLane = rand() % 3;
+                r = rand() % 3;
+                if(faseHeart) killedLane = rand() % 3;
+                else killedLane = (r >= 1) ? r + 1 : r;
             }
             
             // Kurangi counter rounds jika fase diamond kill aktif
@@ -282,13 +300,28 @@ class Game{
                     killedLane = -1;
                 }
             }
+
+            if (faseSpadeHeart && spadeHeartRoundsRemaining > 0){
+                while (hitSpade >= 1 && hitHeart >= 1){
+                    life++;
+                    hitHeart--;
+                    hitSpade--;
+                    feedback += "Life +1";
+                    feedbackFrame = 10;
+                }
+                spadeHeartRoundsRemaining--;
+                if (spadeHeartRoundsRemaining == 0){
+                    faseSpadeHeart = false;
+                    faseHeart = false;
+                }
+            }
             
             vector<fallingCard> cards;
 
             int numCards = baseNumberOfCards + rand() % baseNumberOfCards;
             
             // Jika sudah 35 kartu dan fase hati belum terbuka, paksa spawn 3 spade beruntun
-            bool forceSpade = (totalCardsSpawned >= 35 && !faseHati);
+            bool forceSpade = (totalCardsSpawned >= 25 && !faseHeart && !faseHeartPernahTerbuka);
             
             for(int i = 0; i < numCards; i++){
                 fallingCard card;
@@ -298,7 +331,7 @@ class Game{
                     card.lane = 0; // Spade lane
                 } 
                 // Jika fase hati belum terbuka, hanya spawn 3 lane (spade, club, diamond)
-                else if (!faseHati) {
+                else if (!faseHeart) {
                     int r = rand() % 3;
                     card.lane = (r >= 1) ? r + 1 : r; // 0, 2, 3 (skip lane 1 = heart)
                 } 
@@ -335,8 +368,6 @@ class Game{
                 totalCardsSpawned++; // Increment total kartu
             }
             
-            string feedback = "";
-            int feedbackFrame = 0;
             bool gameRunning = true;
 
             while(gameRunning){ 
@@ -366,6 +397,12 @@ class Game{
                             if(combo > highestCombo) highestCombo = combo;
                             combo = 0;
                             comboSpade = 0; // Reset spade combo saat miss
+                            if(cards[i].lane == 1){
+                                hitHeart++;
+                                feedback = "MISS HEART! -15";
+                                feedbackFrame = 5;
+                                score -= 15;
+                            }
                             feedback = "MISS!";
                             feedbackFrame = 5;
                         }
@@ -390,8 +427,10 @@ class Game{
                                 // Cek apakah input adalah spade (dan bukan killed)
                                 if (input == inputKeySpade && !(faseDiamondKill && killedLane == 0)) {
                                     comboSpade++;
-                                    if (comboSpade >= 3 && !faseHati) {
-                                        faseHati = true;
+                                    hitSpade++;
+                                    if (comboSpade >= 3 && !faseHeart) {
+                                        faseHeart = true;
+                                        faseHeartPernahTerbuka = true;
                                         baseNumberOfCards = 4;
                                         feedback = "PERFECT! +10          >>> FASE HATI TERBUKA! <<<";
                                         feedbackFrame = 10;
@@ -401,12 +440,16 @@ class Game{
                                     }
                                 } else if (input == inputKeyHeart && !(faseDiamondKill && killedLane == 1)){
                                     hitHeart++;
-                                    feedback = "PERFECT! +10";
+                                    feedback = "PERFECT HEART! +10";
                                     feedbackFrame = 5;
-                                    if (hitHeart >= 7){
-                                        feedback = "PERFECT! +10          >>> HEART IS BROKEN <<<";
+                                    score += 10;
+                                    if ((hitHeart + missHeart) >= 7){
+                                        feedback = "PERFECT HEART! +10          >>> FASE SPADE-HEART <<<";
                                         feedbackFrame = 5;
-                                        faseHati = false;
+                                        hitHeart = 0;
+                                        missHeart = 0;
+                                        faseSpadeHeart = true;
+                                        spadeHeartRoundsRemaining = 5;
                                     }
                                 } else {
                                     if (!(input == inputKeySpade)) {
@@ -426,10 +469,12 @@ class Game{
                                 // Cek apakah input adalah spade (dan bukan killed)
                                 if (input == inputKeySpade && !(faseDiamondKill && killedLane == 0)) {
                                     comboSpade++;
-                                    if (comboSpade >= 3 && !faseHati) {
-                                        faseHati = true;
+                                    hitSpade++;
+                                    if (comboSpade >= 3 && !faseHeart) {
+                                        faseHeart = true;
+                                        faseHeartPernahTerbuka = true;
                                         baseNumberOfCards = 4;
-                                        feedback = "GOOD! +5          >>> FASE HATI TERBUKA! <<<";
+                                        feedback = "GOOD! +5          >>> HATI TERBUKA! <<<";
                                         feedbackFrame = 10;
                                     } else {
                                         feedback = "GOOD! +5";
@@ -437,12 +482,16 @@ class Game{
                                     }
                                 } else if (input == inputKeyHeart && !(faseDiamondKill && killedLane == 1)){
                                     hitHeart++;
-                                    feedback = "GOOD! +5";
+                                    feedback = "GOOD HEART! +5";
                                     feedbackFrame = 5;
-                                    if (hitHeart >= 7){
-                                        feedback = "GOOD! +5          >>> HEART IS BROKEN <<<";
+                                    score += 5;
+                                    if ((hitHeart + missHeart) >= 7){
+                                        feedback = "GOOD HEART! +5          >>> FASE SPADE-HEART <<<";
                                         feedbackFrame = 5;
-                                        faseHati = false;
+                                        hitHeart = 0;
+                                        missHeart = 0;
+                                        faseSpadeHeart = true;
+                                        spadeHeartRoundsRemaining = 5;
                                     }
                                 } else {
                                     if (!(input == inputKeySpade)) {
@@ -460,6 +509,12 @@ class Game{
                                 if(combo > highestCombo) highestCombo = combo;
                                 combo = 0;
                                 comboSpade = 0; // Reset spade combo saat miss
+
+                                if(cards[i].lane == 1){
+                                    feedback = "MISS HEART! -15";
+                                    feedbackFrame = 5;
+                                    score -= 15;
+                                }
                                 
                                 // Bedakan terlalu awal vs terlalu lambat
                                 if (cards[i].coordinateY < inputLine - perfectZone - 2) {
@@ -591,9 +646,9 @@ class Menu{
                 cout << "GAME OVER!" << endl << endl;
                 cout << "Score = " << score << endl;
                 cout << "Highest combo = " << i << endl;
-                cout << "Additional score " << addScore << endl;
+                cout << "Additional score = " << addScore << endl;
                 addScore += 5;
-                Sleep(25);
+                Sleep(15);
             }
             Sleep(500);
             for (int i = addScore; i >= 0; i-=5){
@@ -602,8 +657,8 @@ class Menu{
                 cout << "Score = " << score << endl;
                 score += 5;
                 cout << endl;
-                cout << "Additional score " << i << endl;
-                Sleep(25);
+                cout << "Additional score = " << i << endl;
+                Sleep(15);
             }
             clearScreen();
             cout << "GAME OVER!" << endl << endl;
@@ -699,10 +754,7 @@ class Menu{
             delayPrint("GOOD HIT (dekat target) = +5 poin", 25);
             c = _getch();
             cout << endl;
-            delayPrint("MISS (terlambat/tidak menekan) = -1 nyawa", 25);
-            c = _getch();
-            cout << endl << endl;
-            delayPrint("SPECIAL: Hit 3 Spade beruntun untuk membuka FASE HATI!", 25);
+            delayPrint("MISS (terlalu cepat/terlambat/tidak menekan) = -1 nyawa", 25);
             c = _getch();
             cout << endl << endl;
             delayPrint("Kamu punya 3 nyawa. Good luck!", 25);

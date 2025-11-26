@@ -155,6 +155,7 @@ class Game{
         int comboSpade = 0; // Counter untuk spade beruntun
         int totalCardsSpawned = 0; // Counter total kartu yang sudah spawn
         bool faseHati = false;
+        int totalHeartSpawned = 0;
         
         // Atribut untuk fase Diamond Kill
         bool faseDiamondKill = false;
@@ -574,7 +575,7 @@ class Menu{
                 cout << "Highest combo = " << i << endl;
                 cout << "Additional score " << addScore << endl;
                 addScore += 5;
-                Sleep(50);
+                Sleep(100);
             }
             c = _getch();
             for (int i = addScore; i >= 0; i-=5){
@@ -584,7 +585,7 @@ class Menu{
                 score += 5;
                 cout << endl;
                 cout << "Additional score " << i << endl;
-                Sleep(50);
+                Sleep(100);
             }
             clearScreen();
             cout << "GAME OVER!" << endl << endl;

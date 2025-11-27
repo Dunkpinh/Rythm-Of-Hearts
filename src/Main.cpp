@@ -144,7 +144,6 @@ void writeRecords(const Record& records) {
     file << records.nickname << endl << records.score << endl << records.tanggal << endl << endl;
 }
 
-// class game
 class Game{
     private:
         int life;
@@ -281,15 +280,15 @@ class Game{
         }
 
         bool randomCard(){
-            string feedback = "";
+            string feedback = "";5
             int feedbackFrame = 0;
 
             if (totalCardsSpawned >= 250) speed = 15; 
-            else if (totalCardsSpawned >= 170) speed = 25;
-            else if (totalCardsSpawned >= 100) speed = 50;
-            else if (totalCardsSpawned >= 50) speed = 75;
-            else if (totalCardsSpawned >= 25) speed = 100;
-            else speed = 125;
+            else if (totalCardsSpawned >= 170) speed = 100;
+            else if (totalCardsSpawned >= 100) speed = 200;
+            else if (totalCardsSpawned >= 50) speed = 300;
+            else if (totalCardsSpawned >= 25) speed = 400;
+            else speed = 400;
 
             int r = rand() % 5;
             if ((totalCardsSpawned >= 45 && totalCardsSpawned <= 125 || totalCardsSpawned >= 170) && !faseDiamondKill && diamondKillRoundsRemaining == 0 && r == 0) {
@@ -707,7 +706,7 @@ class Menu{
                 Sleep(15);
             }
             Sleep(1000);
-            for (int i = addScore; i > 0; i-=5){
+            for (int i = addScore; i >= 0; i-=5){
                 clearScreen();
                 cout << "GAME OVER!" << endl << endl;
                 cout << "Score = " << score << endl;
